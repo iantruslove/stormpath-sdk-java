@@ -18,7 +18,9 @@ This project requires Maven 3.0.3 to build.  Run the following:
 
 ### 1.0.RC ###
 
+- [Issue 55](https://github.com/stormpath/stormpath-sdk-java/issues/55): Account's password can now be reset along with the password reset token, in one API call.
 - [Issue 54](https://github.com/stormpath/stormpath-sdk-java/issues/54): AuthenticationResult is not a Resource any longer.
+
 
 ### 1.0.beta ###
 
