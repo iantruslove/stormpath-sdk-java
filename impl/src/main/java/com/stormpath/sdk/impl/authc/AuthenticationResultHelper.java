@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.stormpath.sdk.impl.provider;
+package com.stormpath.sdk.impl.authc;
 
-import com.stormpath.sdk.provider.ProviderAccountResult;
+import com.stormpath.sdk.authc.AuthenticationResult;
 import com.stormpath.sdk.resource.Resource;
 
 /**
- * Since {@link ProviderAccountResult} is not a resource per-se we use this helper class which is in charge of
- * instantiating the result of an {@link com.stormpath.sdk.application.Application#getAccount(com.stormpath.sdk.provider.ProviderAccountRequest)
- * account access request} obtained from Stormpath.
+ * Since {@link AuthenticationResult} is not a resource per-se we use this helper class which is in charge of
+ * instantiating the result of an {@link com.stormpath.sdk.application.Application#authenticateAccount(com.stormpath.sdk.authc.AuthenticationRequest)
+ * authentication request} obtained from Stormpath.
  *
- * @since 1.0.beta
+ * @since 1.0.RC
  */
-public interface ProviderAccountResultHelper extends Resource {
+public interface AuthenticationResultHelper extends Resource {
 
-    ProviderAccountResult getProviderAccountResult();
+    AuthenticationResult getAuthenticationResult();
 
 }

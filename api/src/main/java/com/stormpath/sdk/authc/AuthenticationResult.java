@@ -21,7 +21,7 @@ import com.stormpath.sdk.resource.Resource;
 /**
  * @since 0.1
  */
-public interface AuthenticationResult extends Resource {
+public interface AuthenticationResult {
 
     Account getAccount();
 }

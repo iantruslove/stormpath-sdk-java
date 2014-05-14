@@ -69,6 +69,7 @@ class BasicAuthenticatorTest {
 
         def internalDataStore = createStrictMock(InternalDataStore)
         def basicLoginAttempt = createStrictMock(BasicLoginAttempt)
+        def authenticationResultHelper = createStrictMock(AuthenticationResultHelper)
         def authenticationResult = createStrictMock(AuthenticationResult)
 
         def request = new UsernamePasswordRequest(username, password)
@@ -76,14 +77,15 @@ class BasicAuthenticatorTest {
         expect(internalDataStore.instantiate(BasicLoginAttempt.class)).andReturn(basicLoginAttempt);
         expect(basicLoginAttempt.setType("basic"))
         expect(basicLoginAttempt.setValue("Zm9vVXNlcm5hbWU6YmFyUGFzc3dk"))
-        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResult.class)).andReturn(authenticationResult)
+        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResultHelper.class)).andReturn(authenticationResultHelper)
+        expect(authenticationResultHelper.getAuthenticationResult()).andReturn(authenticationResult)
 
-        replay(internalDataStore, basicLoginAttempt, authenticationResult)
+        replay(internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
         BasicAuthenticator basicAuthenticator = new BasicAuthenticator(internalDataStore)
-        basicAuthenticator.authenticate(appHref, request)
+        assertEquals(basicAuthenticator.authenticate(appHref, request), authenticationResult)
 
-        verify(internalDataStore, basicLoginAttempt, authenticationResult)
+        verify(internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
     }
 
@@ -96,6 +98,7 @@ class BasicAuthenticatorTest {
 
         def internalDataStore = createStrictMock(InternalDataStore)
         def basicLoginAttempt = createStrictMock(BasicLoginAttempt)
+        def authenticationResultHelper = createStrictMock(AuthenticationResultHelper)
         def authenticationResult = createStrictMock(AuthenticationResult)
 
         def request = new UsernamePasswordRequest(username, password, (AccountStore) null)
@@ -103,14 +106,15 @@ class BasicAuthenticatorTest {
         expect(internalDataStore.instantiate(BasicLoginAttempt.class)).andReturn(basicLoginAttempt);
         expect(basicLoginAttempt.setType("basic"))
         expect(basicLoginAttempt.setValue("Zm9vVXNlcm5hbWU6YmFyUGFzc3dk"))
-        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResult.class)).andReturn(authenticationResult)
+        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResultHelper.class)).andReturn(authenticationResultHelper)
+        expect(authenticationResultHelper.getAuthenticationResult()).andReturn(authenticationResult)
 
-        replay(internalDataStore, basicLoginAttempt, authenticationResult)
+        replay(internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
         BasicAuthenticator basicAuthenticator = new BasicAuthenticator(internalDataStore)
-        basicAuthenticator.authenticate(appHref, request)
+        assertEquals(basicAuthenticator.authenticate(appHref, request), authenticationResult)
 
-        verify(internalDataStore, basicLoginAttempt, authenticationResult)
+        verify(internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
     }
 
@@ -124,6 +128,7 @@ class BasicAuthenticatorTest {
         def accountStore = createStrictMock(AccountStore)
         def internalDataStore = createStrictMock(InternalDataStore)
         def basicLoginAttempt = createStrictMock(BasicLoginAttempt)
+        def authenticationResultHelper = createStrictMock(AuthenticationResultHelper)
         def authenticationResult = createStrictMock(AuthenticationResult)
 
         def request = new UsernamePasswordRequest(username, password, accountStore)
@@ -132,14 +137,15 @@ class BasicAuthenticatorTest {
         expect(basicLoginAttempt.setType("basic"))
         expect(basicLoginAttempt.setValue("Zm9vVXNlcm5hbWU6YmFyUGFzc3dk"))
         expect(basicLoginAttempt.setAccountStore(accountStore))
-        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResult.class)).andReturn(authenticationResult)
+        expect(internalDataStore.create(appHref + "/loginAttempts", basicLoginAttempt, AuthenticationResultHelper.class)).andReturn(authenticationResultHelper)
+        expect(authenticationResultHelper.getAuthenticationResult()).andReturn(authenticationResult)
 
-        replay(accountStore, internalDataStore, basicLoginAttempt, authenticationResult)
+        replay(accountStore, internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
         BasicAuthenticator basicAuthenticator = new BasicAuthenticator(internalDataStore)
-        basicAuthenticator.authenticate(appHref, request)
+        assertEquals(basicAuthenticator.authenticate(appHref, request), authenticationResult)
 
-        verify(accountStore, internalDataStore, basicLoginAttempt, authenticationResult)
+        verify(accountStore, internalDataStore, basicLoginAttempt, authenticationResultHelper, authenticationResult)
 
     }
 

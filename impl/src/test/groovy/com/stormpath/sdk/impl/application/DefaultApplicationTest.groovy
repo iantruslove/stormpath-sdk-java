@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.stormpath.sdk.impl.application
 
 import com.stormpath.sdk.account.*
@@ -26,6 +24,7 @@ import com.stormpath.sdk.authc.UsernamePasswordRequest
 import com.stormpath.sdk.group.*
 import com.stormpath.sdk.impl.account.DefaultAccountList
 import com.stormpath.sdk.impl.account.DefaultPasswordResetToken
+import com.stormpath.sdk.impl.authc.AuthenticationResultHelper
 import com.stormpath.sdk.impl.authc.BasicLoginAttempt
 import com.stormpath.sdk.impl.authc.DefaultBasicLoginAttempt
 import com.stormpath.sdk.impl.ds.InternalDataStore
@@ -132,14 +131,16 @@ class DefaultApplicationTest {
         expect(internalDataStore.instantiate(PasswordResetToken, [href: properties.passwordResetTokens.href + "/token"])) andReturn(new DefaultPasswordResetToken(internalDataStore, innerProperties))
         expect(internalDataStore.instantiate(Account, innerProperties.account)).andReturn(account)
 
+        def authenticationResultHelper = createStrictMock(AuthenticationResultHelper)
         def authenticationResult = createStrictMock(AuthenticationResult)
         def defaultBasicLoginAttempt = new DefaultBasicLoginAttempt(internalDataStore)
         expect(internalDataStore.instantiate(BasicLoginAttempt)).andReturn(defaultBasicLoginAttempt)
         defaultBasicLoginAttempt.setType("basic")
         defaultBasicLoginAttempt.setValue("dXNlcm5hbWU6cGFzc3dvcmQ=")
-        expect(internalDataStore.create(properties.href + "/loginAttempts", defaultBasicLoginAttempt, AuthenticationResult)).andReturn(authenticationResult)
+        expect(internalDataStore.create(properties.href + "/loginAttempts", defaultBasicLoginAttempt, AuthenticationResultHelper)).andReturn(authenticationResultHelper)
+        expect(authenticationResultHelper.getAuthenticationResult()).andReturn(authenticationResult)
 
-        replay internalDataStore, groupCriteria, accountCriteria, account
+        replay internalDataStore, groupCriteria, accountCriteria, account, authenticationResultHelper
 
         def resource = defaultApplication.getGroups()
         assertTrue(resource instanceof DefaultGroupList && resource.getHref().equals(properties.groups.href))
@@ -168,7 +169,7 @@ class DefaultApplicationTest {
         assertEquals(defaultApplication.verifyPasswordResetToken("token"), account)
         assertEquals(defaultApplication.authenticateAccount(new UsernamePasswordRequest("username", "password")), authenticationResult)
 
-        verify internalDataStore, groupCriteria, accountCriteria, account
+        verify internalDataStore, groupCriteria, accountCriteria, account, authenticationResultHelper
     }
 
     @Test
@@ -421,20 +422,22 @@ class DefaultApplicationTest {
         def createdPasswordResetToken = new DefaultPasswordResetToken(internalDataStore, [account: account])
         expect(internalDataStore.create(properties.passwordResetTokens.href + "/token", instantiatedPasswordResetToken, PasswordResetToken)) andReturn(createdPasswordResetToken)
 
+        def authenticationResultHelper = createStrictMock(AuthenticationResultHelper)
         def authenticationResult = createStrictMock(AuthenticationResult)
         def defaultBasicLoginAttempt = new DefaultBasicLoginAttempt(internalDataStore)
         expect(internalDataStore.instantiate(BasicLoginAttempt)).andReturn(defaultBasicLoginAttempt)
         defaultBasicLoginAttempt.setType("basic")
         defaultBasicLoginAttempt.setValue("dXNlcm5hbWU6cGFzc3dvcmQ=")
-        expect(internalDataStore.create(properties.href + "/loginAttempts", defaultBasicLoginAttempt, AuthenticationResult)).andReturn(authenticationResult)
+        expect(internalDataStore.create(properties.href + "/loginAttempts", defaultBasicLoginAttempt, AuthenticationResultHelper)).andReturn(authenticationResultHelper)
+        expect(authenticationResultHelper.getAuthenticationResult()).andReturn(authenticationResult)
 
-        replay internalDataStore, account
+        replay internalDataStore, account, authenticationResultHelper
 
         assertEquals(defaultApplication.sendPasswordResetEmail("some@email.com"), account)
         assertEquals(defaultApplication.resetPassword("token", "myNewPassword"), account)
         assertEquals(defaultApplication.authenticateAccount(new UsernamePasswordRequest("username", "myNewPassword")), authenticationResult)
 
-        verify internalDataStore, account
+        verify internalDataStore, account, authenticationResultHelper
     }
 
     /**
