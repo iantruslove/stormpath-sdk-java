@@ -71,6 +71,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.stormpath.sdk.impl.api.ApiKeyParameter.*;
 import static com.stormpath.sdk.impl.resource.AbstractCollectionResource.*;
@@ -95,6 +98,9 @@ public class DefaultDataStore implements InternalDataStore {
     private final PropertiesFilterProcessor resourceDataFilterProcessor;
     private final PropertiesFilterProcessor queryStringFilterProcessor;
     private volatile Map<String, Enlistment> hrefMapStore;
+    protected final Lock readLock;
+    protected final Lock writeLock;
+    public static int count = -99;
 
     /**
      * @since 0.9
@@ -133,6 +139,9 @@ public class DefaultDataStore implements InternalDataStore {
         this.cacheRegionNameResolver = new DefaultCacheRegionNameResolver();
         this.referenceFactory = new ReferenceFactory();
         this.hrefMapStore = new SoftHashMap<String, Enlistment>();
+        ReadWriteLock rwl = new ReentrantReadWriteLock();
+        this.readLock = rwl.readLock();
+        this.writeLock = rwl.writeLock();
         this.apiKey = apiKey;
         this.cacheMapInitializer = new DefaultCacheMapInitializer();
         resourceDataFilterProcessor = new DefaultPropertiesFilterProcessor();
@@ -207,6 +216,14 @@ public class DefaultDataStore implements InternalDataStore {
         href = ensureFullyQualified(href);
 
         Map<String, ?> data = retrieveResponseValue(href, clazz, qs);
+
+        if(href.contains("customData") && count != -99) {
+            String customDataString = data.toString().toLowerCase();
+            int floatCount = (customDataString.length() - customDataString.replace("float", "").length()) / 5;
+            if (floatCount != count) {
+                System.out.println("error!!");
+            }
+        }
 
         //@since 1.0.0
         if (!Collections.isEmpty(data) && !CollectionResource.class.isAssignableFrom(clazz) && data.get("href") != null) {
@@ -951,6 +968,19 @@ public class DefaultDataStore implements InternalDataStore {
             mapBody = mapMarshaller.unmarshal(body);
         }
 
+        if(mapBody != null) {
+
+            if (mapBody.toString().substring(62, 77).contains("customData")) {
+
+                String customDataString = mapBody.toString().toLowerCase();
+                int floatCount = (customDataString.length() - customDataString.replace("float", "").length()) / 5;
+                if (floatCount != count && count != -99) {
+                    System.out.println("error!!");
+                }
+
+            }
+        }
+
         return mapBody;
     }
 
@@ -1023,15 +1053,20 @@ public class DefaultDataStore implements InternalDataStore {
      * @since 1.0.0
      */
     private Enlistment toEnlistment(Map data) {
-        Enlistment enlistment;
         Object responseHref = data.get("href");
-        if (this.hrefMapStore.containsKey(responseHref)) {
-            enlistment = this.hrefMapStore.get(responseHref);
-            enlistment.setProperties((Map<String, Object>) data);
-        } else {
-            enlistment = new Enlistment((Map<String, Object>) data);
-            this.hrefMapStore.put((String) responseHref, enlistment);
+        writeLock.lock();
+        try {
+            Enlistment enlistment;
+            if (this.hrefMapStore.containsKey(responseHref)) {
+                enlistment = this.hrefMapStore.get(responseHref);
+                enlistment.setProperties((Map<String, Object>) data);
+            } else {
+                enlistment = new Enlistment((Map<String, Object>) data);
+                this.hrefMapStore.put((String) responseHref, enlistment);
+            }
+            return enlistment;
+        } finally {
+            writeLock.unlock();
         }
-        return enlistment;
     }
 }

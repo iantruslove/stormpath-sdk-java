@@ -48,43 +48,43 @@ abstract class AbstractCustomDataIT extends ClientIT {
     Map createComplexData() {
 
         def m = [
-                nullProperty: null,
-                emptyStringProperty: "",
-                whitespaceOnlyStringProperty: "     ",
+//                nullProperty: null,
+//                emptyStringProperty: "",
+//                whitespaceOnlyStringProperty: "     ",
                 simpleStringProperty: "Hello, world!",
-                japaneseCharacters: "アナリストは「Apacheの史郎は、今日日本のソフトウェアエンジニアのた",
+//                japaneseCharacters: "アナリストは「Apacheの史郎は、今日日本のソフトウェアエンジニアのた",
                 spanishCharacters: "El niño está usando Stormpath para su aplicación.",
-                trueProperty: true,
-                falseProperty: false,
-
-                minIntegerProperty: Integer.MIN_VALUE,
-                zeroIntegerProperty: 0,
-                integerProperty: 1001,
-                maxIntegerProperty: Integer.MAX_VALUE,
-
-                minLongProperty: Long.MIN_VALUE,
-                zeroLongProperty: 0l,
-                longProperty: 3323493203l,
-                maxLongProperty: Long.MAX_VALUE,
-
+//                trueProperty: true,
+//                falseProperty: false,
+//
+//                minIntegerProperty: Integer.MIN_VALUE,
+//                zeroIntegerProperty: 0,
+//                integerProperty: 1001,
+//                maxIntegerProperty: Integer.MAX_VALUE,
+//
+//                minLongProperty: Long.MIN_VALUE,
+//                zeroLongProperty: 0l,
+//                longProperty: 3323493203l,
+//                maxLongProperty: Long.MAX_VALUE,
+//
                 minFloatProperty: new BigDecimal(Float.MIN_VALUE), //seen as a decimal
                 zeroFloatProperty: new BigDecimal("0.00"), //seen as a decimal by JSON
                 floatProperty: new BigDecimal(3.14f), //seen as a decimal by JSON
                 maxFloatProperty: new BigDecimal(Float.MAX_VALUE).toBigInteger(),
-
-                minDoubleProperty: new BigDecimal(Double.MIN_VALUE),
-                zeroDoubleProperty: new BigDecimal("0.0"),
+//
+//                minDoubleProperty: new BigDecimal(Double.MIN_VALUE),
+//                zeroDoubleProperty: new BigDecimal("0.0"),
                 doubleProperty: new BigDecimal(3.14159d),
-                maxDoubleProperty: new BigDecimal(Double.MAX_VALUE).toBigInteger(),
-
-                negativeBigIntegerProperty: new BigInteger("-1415899999999998826183400524314492940902709960937514158999999999988261834005243144929409027099609375"),
-                positiveBigIntegerProperty: new BigInteger("1415899999999998826183400524314492940902709960937514158999999999988261834005243144929409027099609375"),
-
-                negativeBigDecimalProperty: new BigDecimal("-3141589999999999882600524314492941834005200524314492940902709960937.999999999988261839294090270996093754005243144929409027099609375"),
-                positiveBigDecimalProperty: new BigDecimal("3141589999999999882600524314492941834005200524314492940902709960937.999999999988261839294090270996093754005243144929409027099609375"),
+//                maxDoubleProperty: new BigDecimal(Double.MAX_VALUE).toBigInteger(),
+//
+//                negativeBigIntegerProperty: new BigInteger("-1415899999999998826183400524314492940902709960937514158999999999988261834005243144929409027099609375"),
+//                positiveBigIntegerProperty: new BigInteger("1415899999999998826183400524314492940902709960937514158999999999988261834005243144929409027099609375"),
+//
+//                negativeBigDecimalProperty: new BigDecimal("-3141589999999999882600524314492941834005200524314492940902709960937.999999999988261839294090270996093754005243144929409027099609375"),
+//                positiveBigDecimalProperty: new BigDecimal("3141589999999999882600524314492941834005200524314492940902709960937.999999999988261839294090270996093754005243144929409027099609375"),
         ]
-        m.listProperty = m.values().toList()
-        m.mapProperty = m.clone()
+//        m.listProperty = m.values().toList()
+//        m.mapProperty = m.clone()
 
         return m;
     }
@@ -92,13 +92,13 @@ abstract class AbstractCustomDataIT extends ClientIT {
     Map createDataForUpdate() {
 
         def m = [
-                integerProperty: (int) (Integer.MAX_VALUE * Math.random()),
-                longProperty: 1234567890l,
-                uniqueString: uniquify("this is a unique random string"),
+//                integerProperty: (int) (Integer.MAX_VALUE * Math.random()),
+//                longProperty: 1234567890l,
+//                uniqueString: uniquify("this is a unique random string"),
                 doubleProperty: new BigDecimal(1234567890.0987654321)
         ]
 
-        m.listProperty = m.values().toList()
+//        m.listProperty = m.values().toList()
 
         return m
     }

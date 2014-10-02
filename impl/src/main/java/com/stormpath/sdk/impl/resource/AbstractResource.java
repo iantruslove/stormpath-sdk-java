@@ -260,9 +260,8 @@ public abstract class AbstractResource implements Resource {
      */
     protected Object setProperty(String name, Object value, final boolean dirty) {
         writeLock.lock();
-        Object previous;
         try {
-            previous = this.dirtyProperties.put(name, value);
+            Object previous = this.dirtyProperties.put(name, value);
             if(previous == null) {
                 previous = this.properties.get(name);
             }
@@ -270,10 +269,10 @@ public abstract class AbstractResource implements Resource {
             if (this.deletedPropertyNames.contains(name)) {
                 this.deletedPropertyNames.remove(name);
             }
+            return previous;
         } finally {
             writeLock.unlock();
         }
-        return previous;
     }
 
 

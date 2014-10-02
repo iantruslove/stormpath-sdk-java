@@ -24,9 +24,21 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>stormpath-sdk-java.log</file>
+        <append>true</append>
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="TRACE">
+        <appender-ref ref="FILE"/>
     </root>
     <logger name="com.stormpath.sdk.impl.ds.DefaultDataStore" level="INFO"/>
+    <logger name="httpclient.wire" level="debug" />
+    <logger name="org.apache.commons.httpclient" level="debug" />
 
 </configuration>

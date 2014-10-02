@@ -33,6 +33,7 @@ import com.stormpath.sdk.impl.http.support.DefaultRequest;
 import com.stormpath.sdk.impl.http.support.DefaultResponse;
 import com.stormpath.sdk.impl.util.StringInputStream;
 import com.stormpath.sdk.lang.Assert;
+import com.sun.deploy.net.HttpUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -47,13 +48,17 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.params.AllClientPNames;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -102,8 +107,9 @@ public class HttpClientRequestExecutor implements RequestExecutor {
     /**
      * Creates a new {@code HttpClientRequestExecutor} using the specified {@code ApiKey} and optional {@code Proxy}
      * configuration.
-     * @param apiKey the Stormpath account API Key that will be used to authenticate the client with Stormpath's API sever
-     * @param proxy the HTTP proxy to be used when communicating with the Stormpath API server (can be null)
+     *
+     * @param apiKey               the Stormpath account API Key that will be used to authenticate the client with Stormpath's API sever
+     * @param proxy                the HTTP proxy to be used when communicating with the Stormpath API server (can be null)
      * @param authenticationScheme the HTTP authentication scheme to be used when communicating with the Stormpath API server.
      *                             If null, then Sauthc1 will be used.
      */
@@ -118,6 +124,17 @@ public class HttpClientRequestExecutor implements RequestExecutor {
 
         PoolingClientConnectionManager connMgr = new PoolingClientConnectionManager();
         connMgr.setDefaultMaxPerRoute(10);
+
+//        RequestConfig.Builder requestBuilder = RequestConfig.custom()
+////                .setSocketTimeout(CONNECTION_TIMEOUT)
+////                .setConnectTimeout(CONNECTION_TIMEOUT)
+//                .setRedirectsEnabled(false);
+
+//        ConnectionConfig.Builder connectionConfigBuilder = ConnectionConfig.custom()
+//                .set
+//                .setSocketTimeout(CONNECTION_TIMEOUT)
+//                .setConnectTimeout(CONNECTION_TIMEOUT)
+//                .setRedirectsEnabled(false);
 
         this.httpClient = new DefaultHttpClient(connMgr);
         httpClient.getParams().setParameter(AllClientPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
@@ -164,7 +181,7 @@ public class HttpClientRequestExecutor implements RequestExecutor {
     }
 
     @Override
-    public Response executeRequest(Request request) throws RestException {
+    public synchronized Response executeRequest(Request request) throws RestException {
 
         Assert.notNull(request, "Request argument cannot be null.");
 
@@ -186,7 +203,9 @@ public class HttpClientRequestExecutor implements RequestExecutor {
         originalHeaders.putAll(request.getHeaders());
 
         while (true) {
-
+            HttpRequestBase httpRequest = null;
+            HttpResponse httpResponse = null;
+            try {
             if (redirectUri != null) {
                 request = new DefaultRequest(
                         request.getMethod(),
@@ -208,15 +227,15 @@ public class HttpClientRequestExecutor implements RequestExecutor {
                 this.requestAuthenticator.authenticate(request, this.apiKey);
             }
 
-            HttpRequestBase httpRequest = this.httpClientRequestFactory.createHttpClientRequest(request, entity);
+            httpRequest = this.httpClientRequestFactory.createHttpClientRequest(request, entity);
 
             if (httpRequest instanceof HttpEntityEnclosingRequest) {
                 entity = ((HttpEntityEnclosingRequest) httpRequest).getEntity();
             }
 
 
-            HttpResponse httpResponse = null;
-            try {
+
+//            try {
                 if (retryCount > 0) {
                     pauseExponentially(retryCount, exception);
                     if (entity != null) {
@@ -231,7 +250,25 @@ public class HttpClientRequestExecutor implements RequestExecutor {
                 retryCount++;
 
                 //long start = System.currentTimeMillis();
-                httpResponse = httpClient.execute(httpRequest);
+
+
+//                RequestConfig.Builder requestBuilder = RequestConfig.custom()
+//                        .setSocketTimeout(CONNECTION_TIMEOUT)
+//                        .setConnectTimeout(CONNECTION_TIMEOUT)
+//                        .setRedirectsEnabled(false);
+//
+//                this.httpClient = HttpClientBuilder.create()
+//                        .setDefaultRequestConfig(requestBuilder.build()).build();
+
+//                this.httpClient = new DefaultHttpClient();
+//                httpClient.getParams().setParameter(AllClientPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+//                httpClient.getParams().setParameter(AllClientPNames.SO_TIMEOUT, CONNECTION_TIMEOUT);
+//                httpClient.getParams().setParameter(AllClientPNames.CONNECTION_TIMEOUT, CONNECTION_TIMEOUT);
+//                httpClient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+//                httpClient.getParams().setParameter("http.protocol.content-charset", "UTF-8");
+
+                httpResponse = this.httpClient.execute(httpRequest);
+
                 //long end = System.currentTimeMillis();
                 //executionContext.getTimingInfo().addSubMeasurement(HTTP_REQUEST_TIME, new TimingInfo(start, end));
 
@@ -265,24 +302,45 @@ public class HttpClientRequestExecutor implements RequestExecutor {
                     throw new RestException("Unable to execute HTTP request: " + t.getMessage(), t);
                 }
             } finally {
+//                try {
+//                    this.httpClient.getRequestExecutor().clclose();
+//                } catch (Throwable ignored) {
+//                }
                 try {
-                    httpResponse.getEntity().getContent().close();
-                } catch (Throwable ignored) {
+                    //Ensure that the content has been fully acquired before closing the http stream
+                    //InputStream body = httpResponse.getEntity() != null ? getContent() : null;
+                    if (httpResponse != null) {
+                        EntityUtils.consume(httpResponse.getEntity());
+//                        while(body.read() != -1);
+//                        body.close();
+                    }
+                } catch (Throwable ignore) {
+
                 }
+//                httpRequest.abort();
+                httpRequest.releaseConnection();
             }
         }
     }
 
-    private String toString(InputStream is) throws IOException {
-        if (is == null) {
-            return null;
-        }
-        try {
-            return new java.util.Scanner(is, "UTF-8").useDelimiter("\\A").next();
-        } catch (java.util.NoSuchElementException e) {
-            return null;
-        }
-    }
+//    private String toString(InputStream is) throws IOException {
+//        if (is == null) {
+//            return null;
+//        }
+//        try {
+////            BufferedReader in = new BufferedReader(new InputStreamReader(is));
+////            String line = null;
+////            StringBuilder responseData = new StringBuilder();
+////            while((line = in.readLine()) != null) {
+////                responseData.append(line);
+////            }
+////            return responseData.toString();
+//            return EntityUtils.toString(is);
+//            //return new java.util.Scanner(is, "UTF-8").useDelimiter("\\A").next().toString();
+//        } catch (java.util.NoSuchElementException e) {
+//            return null;
+//        }
+//    }
 
     private boolean isRedirect(org.apache.http.HttpResponse response) {
         int status = response.getStatusLine().getStatusCode();
@@ -400,9 +458,19 @@ public class HttpClientRequestExecutor implements RequestExecutor {
 
         //ensure that the content has been fully acquired before closing the http stream
         if (body != null) {
-            String stringBody = toString(body);
-            body = new StringInputStream(stringBody);
+//            String stringBody = toString(body);
+//            body = new StringInputStream(stringBody);
+            body = new StringInputStream(EntityUtils.toString(entity, "UTF-8"));
+        } else {
+            EntityUtils.consume(entity);
         }
+
+//        //ensure that the content has been fully acquired before closing the http stream
+//        if (body != null) {
+////            String stringBody = toString(body);
+//
+//            body = new StringInputStream(stringBody);
+//        }
 
         return new DefaultResponse(httpStatus, mediaType, body, contentLength);
     }
@@ -421,4 +489,33 @@ public class HttpClientRequestExecutor implements RequestExecutor {
 
         return headers;
     }
+//
+//    // Should be thread safe
+//    class HttpClientFactory {
+//
+//        private static CloseableHttpClient httpClient;
+//
+//        public synchronized static CloseableHttpClient getThreadSafeClient() {
+//            if (httpClient != null) {
+//                return httpClient;
+//            }
+//
+//            RequestConfig.Builder requestBuilder = RequestConfig.custom()
+////                .setSocketTimeout(CONNECTION_TIMEOUT)
+////                .setConnectTimeout(CONNECTION_TIMEOUT)
+//                    .setRedirectsEnabled(false);
+//
+////        ConnectionConfig.Builder connectionConfigBuilder = ConnectionConfig.custom()
+////                .set
+////                .setSocketTimeout(CONNECTION_TIMEOUT)
+////                .setConnectTimeout(CONNECTION_TIMEOUT)
+////                .setRedirectsEnabled(false);
+//
+//            httpClient = HttpClientBuilder.create()
+//                    .setDefaultRequestConfig(requestBuilder.build()).build();
+//
+//            return httpClient;
+//
+//        }
+//
 }

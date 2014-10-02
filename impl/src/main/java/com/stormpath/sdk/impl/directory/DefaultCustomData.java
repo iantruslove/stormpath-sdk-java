@@ -16,6 +16,7 @@
 package com.stormpath.sdk.impl.directory;
 
 import com.stormpath.sdk.directory.CustomData;
+import com.stormpath.sdk.impl.ds.DefaultDataStore;
 import com.stormpath.sdk.impl.ds.InternalDataStore;
 import com.stormpath.sdk.impl.resource.AbstractInstanceResource;
 import com.stormpath.sdk.impl.resource.DateProperty;
@@ -106,7 +107,12 @@ public class DefaultCustomData extends AbstractInstanceResource implements Custo
     @Override
     public Object get(Object key) {
         Assert.isInstanceOf(String.class, key);
-        return super.getProperty(key.toString());
+        readLock.lock();
+        try {
+            return super.getProperty(key.toString());
+        } finally {
+            readLock.unlock();
+        }
     }
 
     @Override
@@ -167,6 +173,8 @@ public class DefaultCustomData extends AbstractInstanceResource implements Custo
 
     @Override
     public Set<String> keySet() {
+        readLock.lock();
+        try {
         if(! isMaterialized()) {
             writeLock.lock();
             try {
@@ -175,6 +183,10 @@ public class DefaultCustomData extends AbstractInstanceResource implements Custo
                 writeLock.unlock();
             }
         }
+        } finally {
+                readLock.unlock();
+            }
+
         readLock.lock();
         try {
             Set<String> keySet = new LinkedHashSet<String>();
@@ -192,7 +204,12 @@ public class DefaultCustomData extends AbstractInstanceResource implements Custo
         Set<String> keySet = this.keySet();
         Collection<Object> values = new ArrayList<Object>(keySet.size());
         for (String key : keySet) {
-            values.add(this.get(key));
+            readLock.lock();
+            try {
+                values.add(this.get(key));
+            } finally {
+                readLock.unlock();
+            }
         }
         return java.util.Collections.unmodifiableCollection(values);
     }
@@ -234,11 +251,22 @@ public class DefaultCustomData extends AbstractInstanceResource implements Custo
         try {
 
             Set<String> deletedPropertyNames = this.getDeletedPropertyNames();
+            int count = 4;
             for (String deletedPropertyName : deletedPropertyNames) {
                 getDataStore().deleteResourceProperty(this, deletedPropertyName);
                 this.properties.remove(deletedPropertyName);
+                count--;
+                ((DefaultDataStore)getDataStore()).count = count;
+                String customDataString = getDataStore().getResource(getHref(), CustomData.class).keySet().toString();
+                String customDataString1 = customDataString;
+                int floatCount = (customDataString1.length() - customDataString1.toLowerCase().replace("float", "").length()) / 5;
             }
             this.deletedPropertyNames.clear();
+            if(this.deletedPropertyNames.size() != 0) {
+                System.out.println("error!!");
+            }
+            //String customDataString = getDataStore().getResource(getHref(), CustomData.class).keySet().toString();
+            ((DefaultDataStore)getDataStore()).count = -99;
         } finally {
             this.writeLock.unlock();
         }

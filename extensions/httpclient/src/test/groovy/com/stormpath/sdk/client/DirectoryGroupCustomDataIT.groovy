@@ -18,6 +18,7 @@ package com.stormpath.sdk.client
 import com.stormpath.sdk.directory.Directory
 import com.stormpath.sdk.group.Group
 import com.stormpath.sdk.group.Groups
+import com.stormpath.sdk.impl.cache.DisabledCacheManager
 import org.testng.annotations.Test
 
 /**
@@ -30,32 +31,42 @@ class DirectoryGroupCustomDataIT extends AbstractCustomDataIT {
     @Test
     void testCreateGroupWithCustomData() {
 
-        def app = createApplication();
-        directory = retrieveAppDirectory(app);
-        deleteOnTeardown(directory);
-        deleteOnTeardown(app)
+        while (true) {
+            this.client.dataStore.cacheManager = new DisabledCacheManager();
+            def app = createApplication();
+            directory = retrieveAppDirectory(app);
+//            deleteOnTeardown(directory);
+//            deleteOnTeardown(app)
 
-        def postedCustomData = createComplexData()
-        def group1 = createGroup(directory, postedCustomData, false)
-        updateGroup(group1, postedCustomData, createDataForUpdate(), false)
-        updateGroup(group1, postedCustomData, createDataForUpdate(), true)
-        updateGroup(group1, postedCustomData,[:], false)
+            def postedCustomData = createComplexData()
+            def group1 = createGroup(directory, postedCustomData, false)
+//            updateGroup(group1, postedCustomData, createDataForUpdate(), false)
+            updateGroup(group1, postedCustomData, createDataForUpdate(), true)
+//            updateGroup(group1, postedCustomData, [:], false)
+            try {
+                app.delete()
+            } catch (com.stormpath.sdk.resource.ResourceException e) {
+                System.out.println(e.getStackTrace());
+            }
+            directory.delete();
 
-        postedCustomData = createComplexData()
-        def group2 = createGroup(directory, postedCustomData, true)
-        updateGroup(group2, postedCustomData, createDataForUpdate(), true)
-        updateGroup(group2, postedCustomData, createDataForUpdate(), false)
-        updateGroup(group2, postedCustomData,[:], true)
+        }
 
-        postedCustomData = [:]
-        def group3 = createGroup(directory, postedCustomData, false)
-        updateGroup(group3, postedCustomData,[:], false)
-        updateGroup(group3, postedCustomData, createDataForUpdate(), false)
+//        postedCustomData = createComplexData()
+//        def group2 = createGroup(directory, postedCustomData, true)
+//        updateGroup(group2, postedCustomData, createDataForUpdate(), true)
+//        updateGroup(group2, postedCustomData, createDataForUpdate(), false)
+//        updateGroup(group2, postedCustomData, [:], true)
 
-        postedCustomData = [:]
-        def group4 = createGroup(directory, postedCustomData, true)
-        updateGroup(group4, postedCustomData,[:], true)
-        updateGroup(group4, postedCustomData, createDataForUpdate(), true)
+//        postedCustomData = [:]
+//        def group3 = createGroup(directory, postedCustomData, false)
+//        updateGroup(group3, postedCustomData,[:], false)
+//        updateGroup(group3, postedCustomData, createDataForUpdate(), false)
+//
+//        postedCustomData = [:]
+//        def group4 = createGroup(directory, postedCustomData, true)
+//        updateGroup(group4, postedCustomData,[:], true)
+//        updateGroup(group4, postedCustomData, createDataForUpdate(), true)
     }
 
     def Group createGroup(Directory directory, Map postedCustomData, boolean expand) {
@@ -71,7 +82,7 @@ class DirectoryGroupCustomDataIT extends AbstractCustomDataIT {
 
         assertValidCustomData(group.href + "/customData", postedCustomData, group.customData, expand)
 
-        deleteOnTeardown(group)
+//        deleteOnTeardown(group)
 
         return group
     }
