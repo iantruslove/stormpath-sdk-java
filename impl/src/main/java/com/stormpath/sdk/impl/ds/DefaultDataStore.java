@@ -296,7 +296,11 @@ public class DefaultDataStore implements InternalDataStore {
                 String cacheHref = new String(baseUrl + "/apiKeys/" + filteredQs.get(ID.getName()));
                 Class cacheClass = com.stormpath.sdk.api.ApiKey.class;
 
-                Map apiKeyData = getCachedValue(cacheHref, cacheClass);
+                Map apiKeyData = null;
+                //Fix for https://github.com/stormpath/stormpath-sdk-java/issues/74
+                if (!filteredQs.containsKey("expand")) {
+                    getCachedValue(cacheHref, cacheClass);
+                }
 
                 if (!Collections.isEmpty(apiKeyData)) {
                     CollectionProperties.Builder builder = new CollectionProperties.Builder()

@@ -1,5 +1,9 @@
 ## Change Log ##
 
+### 1.0 ##
+
+- [Issue 74](https://github.com/stormpath/stormpath-sdk-java/issues/74): Fixed issue that prevented expanded `ApiKeys` to be properly materialized.
+
 ### 1.0.RC4.1 ##
 
 This release adds ID Site functionality for Spring Web and Spring Boot applications.

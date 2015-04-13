@@ -347,10 +347,9 @@ class ApplicationIT extends ClientIT {
     }
 
 
-    //The implementation of https://github.com/stormpath/stormpath-sdk-java/issues/62
-    //causes the bug https://github.com/stormpath/stormpath-sdk-java/issues/74 to materialize itself.
-    //This test must be re-enabled when issue 74 is implemented.
-    @Test(enabled = false)
+    //https://github.com/stormpath/stormpath-sdk-java/issues/62 caused this bug: https://github.com/stormpath/stormpath-sdk-java/issues/74.
+    //which made this test to fail. This issued was fixed in version 1.0.
+    @Test
     void testGetApiKeyByIdWithOptionsInCache() {
 
         def app = createTempApp()
